@@ -65,7 +65,25 @@ npm run dev
 
 ### 1. 把代码放到 GitHub
 
-在本地初始化仓库、提交并推送到 GitHub（仓库可为私有）。若尚未安装 Git，可先安装 [Git](https://git-scm.com/) 或使用 GitHub Desktop 上传项目。
+**建议的仓库名：`ai-english-quiz-assistant`**（与「AI 英语出题助手」对应，全小写、连字符，符合 GitHub 常见命名）。
+
+本机项目目录里**已经完成** `git init`、默认分支 `main` 和**首次提交**。你还需要：
+
+1. 在浏览器打开 [GitHub → New repository](https://github.com/new)，**Repository name** 填 `ai-english-quiz-assistant`，选 Public 或 Private，**不要**勾选 “Add a README”（保持空仓库）。  
+2. 在本项目根目录执行（把 `你的GitHub用户名` 换成自己的）：
+
+```bash
+git remote add origin https://github.com/你的GitHub用户名/ai-english-quiz-assistant.git
+git push -u origin main
+```
+
+若已安装 [GitHub CLI](https://cli.github.com/)，可先 `gh auth login`，再在本目录执行一键创建并推送：
+
+```bash
+gh repo create ai-english-quiz-assistant --public --source=. --remote=origin --push
+```
+
+若尚未安装 Git，可先安装 [Git for Windows](https://git-scm.com/download/win) 或使用 [GitHub Desktop](https://desktop.github.com/) 将本文件夹发布到上述仓库名。
 
 ### 2. 在 Vercel 导入项目
 
