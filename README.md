@@ -70,10 +70,26 @@ npm run dev
 本机项目目录里**已经完成** `git init`、默认分支 `main` 和**首次提交**。你还需要：
 
 1. 在浏览器打开 [GitHub → New repository](https://github.com/new)，**Repository name** 填 `ai-english-quiz-assistant`，选 Public 或 Private，**不要**勾选 “Add a README”（保持空仓库）。  
-2. 在本项目根目录执行（把 `你的GitHub用户名` 换成自己的）：
+2. **重要**：下面命令里的 **`你的GitHub用户名` 必须改成你在 GitHub 上的真实登录名**（打开 [github.com](https://github.com) 看右上角头像 → Your profile，浏览器地址栏里是 `https://github.com/这里的就是用户名`）。**不要把中文「你的GitHub用户名」原样粘贴进命令**，否则会连不上仓库。
+
+3. **若终端提示「无法将 git 项识别为…」**：先**完全关闭并重新打开** Cursor 终端（或重启 Cursor），让系统加载已配置的 Git 路径；仍不行时，在本仓库根目录用脚本推送（把 `zhangsan` 换成你的登录名）：
+
+```powershell
+.\scripts\push-to-github.ps1 -GitHubUser zhangsan
+```
+
+4. 若 `git` 已可用，在本项目根目录执行（同样把登录名换成你的）：
 
 ```bash
-git remote add origin https://github.com/你的GitHub用户名/ai-english-quiz-assistant.git
+git remote add origin https://github.com/登录名/ai-english-quiz-assistant.git
+git push -u origin main
+```
+
+若之前已经错误执行过 `git remote add`，需要先删掉再添加：
+
+```bash
+git remote remove origin
+git remote add origin https://github.com/登录名/ai-english-quiz-assistant.git
 git push -u origin main
 ```
 
