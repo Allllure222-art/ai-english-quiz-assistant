@@ -1,0 +1,13 @@
+在浏览器中完成（需登录 Vercel + GitHub 授权，约 1～2 分钟）：
+
+1）打开下面这一行链接（整行复制到地址栏）：
+
+https://vercel.com/new?repository-url=https%3A%2F%2Fgithub.com%2FAllllure222-art%2Fai-english-quiz-assistant
+
+2）按页面提示选择账号、Import 仓库，Framework 选 Next.js（一般自动识别）。
+
+3）在 Environment Variables 中填入 OPENAI_API_KEY、NEXTAUTH_SECRET、NEXTAUTH_URL（填部署成功后将获得的 https 域名，可先填占位再 Redeploy）等，见 README「部署到公网」一节。
+
+4）点击 Deploy。完成后页面上的「Visit」或 Domains 里的 https://……vercel.app 即你的网站地址。
+
+说明：我无法代替你在浏览器里登录 Vercel，因此不能在本机「全自动」得到最终网址；完成上述步骤后，把成功页上的 https 链接发给我，我可以帮你检查环境变量是否还缺项。
