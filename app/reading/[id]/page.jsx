@@ -83,7 +83,7 @@ export default function ReadingArticlePage() {
 
             const numQuestions = quizType === 'cloze' ? '20' : '5'
             router.push(
-                `/quiz?quizType=${quizType}&difficulty=beginner&numQuestions=${numQuestions}&draftId=${draftId}`
+                `/workshop?quizType=${quizType}&difficulty=beginner&numQuestions=${numQuestions}&draftId=${draftId}`
             )
         } catch (error) {
             setErrorMessage(error.message || '生成失败，请稍后重试。')
@@ -105,14 +105,14 @@ export default function ReadingArticlePage() {
                             disabled={isGenerating || !article}
                             onClick={() => handleGenerateQuiz('reading')}
                         >
-                            生成阅读理解（默认5题）
+                            用此文备课（阅读理解）
                         </button>
                         <button
                             className='border border-yellow-300/60 rounded px-3 py-1 text-sm text-yellow-200 hover:bg-yellow-300/10 disabled:opacity-50'
                             disabled={isGenerating || !article}
                             onClick={() => handleGenerateQuiz('cloze')}
                         >
-                            生成完形填空（默认20空）
+                            用此文备课（完形填空）
                         </button>
                     </div>
                 </div>

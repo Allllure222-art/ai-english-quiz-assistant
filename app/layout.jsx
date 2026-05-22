@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
     return (
         <html lang='en'>
             <head>
-                <title>AI 英语出题助手</title>
+                <title>AI 初中英语备课助手</title>
                 <link rel="icon" href="my-favicon-32x32.png" type="image/x-icon"></link>
             </head>
             <body className={`${poppins.className} relative`}>

@@ -11,6 +11,7 @@
   "dependencies": {
     "@thednp/dommatrix": "^3.0.4",
     "autoprefixer": "10.4.14",
+    "docx": "^9.6.1",
     "eslint": "8.40.0",
     "eslint-config-next": "13.4.1",
     "eventsource-parser": "^1.0.0",

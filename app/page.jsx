@@ -51,7 +51,7 @@ const HomePage = () => {
                     JSON.stringify(result.parsedDocument)
                 )
                 router.push(
-                    `/quiz?quizType=${quizType}&difficulty=${difficulty}&numQuestions=${numQuestions}&draftId=${draftId}`
+                    `/workshop?quizType=${quizType}&difficulty=${difficulty}&numQuestions=${numQuestions}&draftId=${draftId}`
                 )
             } catch (error) {
                 setErrorMessage(error?.message || '文档解析失败，请稍后重试。')
@@ -110,10 +110,10 @@ const HomePage = () => {
                 <div className='flex min-w-0 flex-1 flex-col items-center px-3 sm:px-4'>
                     <div className='w-full max-w-xl md:max-w-2xl'>
                         <h1 className='q-animate-gradient bg-gradient-to-r from-emerald-500 via-pink-400 to-blue-500 bg-clip-text text-center text-3xl font-bold leading-tight text-transparent sm:text-4xl md:text-5xl lg:text-6xl'>
-                            AI 英语出题助手
+                            AI 初中英语备课助手
                         </h1>
                         <p className='mt-2 text-center text-xs text-white/70 sm:text-sm md:mt-3 md:text-base'>
-                            面向教师、家长与自学用户的英语练习生成工具
+                            上传材料 → AI 出题 → 网页审阅编辑 → 导出学生版 / 教师版 Word 与 PDF
                         </p>
 
                         <form
@@ -262,9 +262,9 @@ const HomePage = () => {
                                     type='submit'
                                     disabled={isParsing}
                                 >
-                                    {isParsing ? '正在解析并生成...' : '生成英语练习'}
+                                    {isParsing ? '正在解析并生成...' : '生成并进入备课台'}
                                 </button>
-                                <div className='mt-2 text-center sm:mt-3'>
+                                <div className='mt-2 flex flex-col items-center gap-1 text-center sm:mt-3'>
                                     <Link
                                         href='/reading-hub'
                                         className='text-sm text-cyan-200 hover:underline'

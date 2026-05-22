@@ -77,14 +77,14 @@ export default function ReadingHubPage() {
                 <div className='flex items-center justify-between flex-wrap gap-4 mb-6'>
                     <div>
                         <h1 className='text-4xl font-bold text-emerald-200'>
-                            文章来源中心
+                            阅读材料中心
                         </h1>
                         <p className='text-white/70 mt-2'>
-                            推荐分级阅读网站（外链）+ 可选 RSS 聚合短文；复制正文后回首页出题。
+                            选一篇作为阅读材料，进入备课台生成可打印练习（Word / PDF）。
                         </p>
                     </div>
                     <Link href='/' className='q-button !mt-0'>
-                        返回出题主页
+                        返回备课主页
                     </Link>
                 </div>
 
@@ -237,7 +237,7 @@ export default function ReadingHubPage() {
                                         href={`/reading/${article.id}?action=quiz&quizType=reading`}
                                         className='border border-cyan-300/60 rounded px-3 py-1 text-sm text-cyan-200 hover:bg-cyan-300/10'
                                     >
-                                        生成阅读题
+                                        用此文备课
                                     </Link>
                                 </div>
                             </article>
