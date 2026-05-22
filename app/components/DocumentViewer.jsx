@@ -81,6 +81,7 @@ function getRenderedLine({
     revealedQuestionIds,
     isAllSubmitted,
     quizType,
+    activeSourcePosition,
 }) {
     if (quizType !== 'cloze') return lineText
     const relatedQuestions = (clozeQuestions || [])
@@ -102,6 +103,14 @@ function getRenderedLine({
                 question.sourcePosition?.quote ||
                 question.sourceEvidence ||
                 '',
+            explanationZh: question.explanationZh || '',
+            isActive:
+                activeSourcePosition != null &&
+                question.sourcePosition?.page === activeSourcePosition.page &&
+                question.sourcePosition?.lineStart === activeSourcePosition.lineStart &&
+                question.sourcePosition?.lineEnd === activeSourcePosition.lineEnd &&
+                (question.sourcePosition?.charStart === activeSourcePosition.charStart ||
+                    activeSourcePosition.charStart === 0),
         }))
 
     if (!relatedQuestions.length) return lineText
@@ -127,16 +136,20 @@ function getRenderedLine({
                             (revealMode === 'per-question' &&
                                 revealedQuestionIds.includes(item.id))
                         return (
-                            <span
-                                key={`wl-${item.id}`}
-                                className='inline-flex items-center rounded border border-yellow-300/70 bg-yellow-400/15 px-1.5 py-0.5 text-xs font-semibold text-yellow-50'
-                            >
-                                空{item.blankIndex}
-                                {shouldReveal ? (
-                                    <span className='ml-1 text-emerald-100'>
-                                        → {item.answer || '（无）'}
+                            <span key={`wl-${item.id}`} className='inline-flex flex-col items-start'>
+                                <span className='inline-flex items-center rounded border border-yellow-300/70 bg-yellow-400/15 px-1.5 py-0.5 text-xs font-semibold text-yellow-50'>
+                                    空{item.blankIndex}
+                                    {shouldReveal ? (
+                                        <span className='ml-1 text-emerald-100'>
+                                            → {item.answer || '（无）'}
+                                        </span>
+                                    ) : null}
+                                </span>
+                                {item.isActive && item.explanationZh && (
+                                    <span className='mt-0.5 max-w-[260px] rounded border border-cyan-300/50 bg-cyan-500/15 px-2 py-1 text-xs leading-snug text-cyan-100'>
+                                        💡 {item.explanationZh}
                                     </span>
-                                ) : null}
+                                )}
                             </span>
                         )
                     })}
@@ -166,20 +179,30 @@ function getRenderedLine({
         }
         if (shouldReveal) {
             pieces.push(
-                <span
-                    key={`reveal-${item.id}-${idx}`}
-                    className='rounded border border-emerald-300 bg-emerald-400/35 px-1 font-bold text-emerald-100'
-                >
-                    {item.answer || '答案'}
+                <span key={`reveal-wrap-${item.id}-${idx}`} className='inline-flex flex-col items-start align-top'>
+                    <span className='rounded border border-emerald-300 bg-emerald-400/35 px-1 font-bold text-emerald-100'>
+                        {item.answer || '答案'}
+                        <sup className='ml-0.5 text-[10px] text-emerald-300'>({item.blankIndex})</sup>
+                    </span>
+                    {item.isActive && item.explanationZh && (
+                        <span className='mt-0.5 max-w-[260px] rounded border border-cyan-300/50 bg-cyan-500/15 px-2 py-1 text-xs leading-snug text-cyan-100'>
+                            💡 {item.explanationZh}
+                        </span>
+                    )}
                 </span>
             )
         } else {
             pieces.push(
-                <span
-                    key={`blank-${item.id}-${idx}`}
-                    className='rounded border border-yellow-300 bg-yellow-300/20 px-1 font-semibold text-yellow-100'
-                >
-                    ____({item.blankIndex})____
+                <span key={`blank-wrap-${item.id}-${idx}`} className='inline-flex flex-col items-start align-top'>
+                    <span className='rounded border border-yellow-300 bg-yellow-300/20 px-1 font-semibold text-yellow-100'>
+                        ______
+                        <sup className='ml-0.5 text-[10px] text-yellow-300'>({item.blankIndex})</sup>
+                    </span>
+                    {item.isActive && item.explanationZh && (
+                        <span className='mt-0.5 max-w-[260px] rounded border border-cyan-300/50 bg-cyan-500/15 px-2 py-1 text-xs leading-snug text-cyan-100'>
+                            💡 {item.explanationZh}
+                        </span>
+                    )}
                 </span>
             )
         }
@@ -255,6 +278,7 @@ export default function DocumentViewer({
                                         revealedQuestionIds,
                                         isAllSubmitted,
                                         quizType,
+                                        activeSourcePosition,
                                     })
                                     const isActiveLine =
                                         activeSourcePosition &&

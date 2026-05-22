@@ -59,7 +59,7 @@ export async function POST(request) {
           ? Number(numQuestions)
           : 5
 
-const readingPrompt = `你是一名中考英语命题老师。请基于给定材料生成 exactly ${questionCount} 道“阅读理解”单选题（初中学段）。
+const readingPrompt = `你是一名中考英语命题老师。请基于给定材料生成 exactly ${questionCount} 道"阅读理解"单选题（初中学段）。
 子题型分布要求：
 - detail（细节理解）至少 1 题
 - main_idea（主旨大意）至少 1 题
@@ -92,33 +92,43 @@ const readingPrompt = `你是一名中考英语命题老师。请基于给定材
 3) 严禁输出 markdown、注释、额外解释。
 4) 若无法精确坐标，precision 用 "approximate"，charStart/charEnd 设为 0。`
 
-const clozePrompt = `你是一名中考英语命题老师。请基于给定材料生成 exactly ${questionCount} 道“完形填空”单选题（初中学段）。
-要求：
-1) 每题代表一个空，blankIndex 从 1 递增到 ${questionCount}。
-2) explanationZh 每题尽量简短（不超过 40 字），以节省输出长度。
-3) 每题字段必须包含：
+const clozePrompt = `你是一名中考英语命题老师。请基于给定材料设计 exactly ${questionCount} 道完形填空单选题（初中学段）。
+
+【命题步骤】
+Step 1：从原文中按出现顺序选出 ${questionCount} 个适合命题的词（优先选动词、名词、形容词、介词等实词）。
+Step 2：将每个选中的词作为一个空，blankIndex 从 1 到 ${questionCount} 按原文顺序递增。
+Step 3：精确记录该词在原文中的位置，填写 sourcePosition。
+
+【字段要求】
+- sourcePosition.quote：必须填写被删除的原词（即正确答案），禁止为空
+- sourcePosition.charStart / charEnd：该词在原文对应行文本中的字符索引（从 0 开始，charEnd = 词末位置+1）
+- sourcePosition.precision：能精确定位到词填 "exact"；无法精确才填 "approximate"（此时 charStart/charEnd 设 0）
+- query：含该空的完整句子上下文，用 ____ 表示空位
+- choices：4 个选项，其中一个是 sourcePosition.quote 对应的正确答案
+- answer：正确答案在 choices 中的 0 索引
+- explanationZh：简短中文解析，不超过 30 字
+
+【每题 JSON 格式】
 {
   "questionType": "cloze",
   "blankIndex": 1,
-  "query": "含空格上下文，例如：Tom ____ to school yesterday.",
+  "query": "Tom ____ to school yesterday.",
   "choices": ["went","go","goes","going"],
   "answer": 0,
-  "explanationZh": "中文解析",
-  "sourceEvidence": "原文依据句",
+  "explanationZh": "过去时用过去式",
+  "sourceEvidence": "被删词所在的完整原文句子",
   "sourcePosition": {
     "page": 1,
-    "lineStart": 1,
-    "lineEnd": 1,
-    "charStart": 0,
-    "charEnd": 0,
-    "quote": "证据短语",
+    "lineStart": 3,
+    "lineEnd": 3,
+    "charStart": 4,
+    "charEnd": 8,
+    "quote": "went",
     "precision": "exact"
   }
 }
-4) 只输出一个 JSON 对象，根字段为 questions，格式：
-{ "questions": [ ... ] }
-5) 严禁输出 markdown、注释、额外解释。
-6) 若无法精确坐标，precision 用 "approximate"，charStart/charEnd 设为 0。`
+
+只输出一个 JSON 对象，根字段为 questions。严禁输出 markdown、代码块或额外文字。`
 
     const prompt = `学段：初中。难度：${
         levelMap[difficulty] || '中级（CEFR B1-B2）'
@@ -129,7 +139,7 @@ ${isCloze ? clozePrompt : readingPrompt}
 ${hasPassage ? documentText : '无'}`
 
     const maxOutputTokens = isCloze
-        ? Math.min(4096, 800 + questionCount * 160)
+        ? Math.min(4096, 900 + questionCount * 180)
         : 2500
 
     const systemMessage = {
@@ -264,8 +274,3 @@ ${hasPassage ? documentText : '无'}`
         )
     }
 }
-
-
-// This was the first prompt. It worked but wasn't grammatically correct for different languages/topics and didn't include the "random" ability.
-
-// const prompt = `Give me ${numQuestions} multiple choice questions about ${topic} in the ${language} programming language.. The questions should be at an ${difficulty} level. Return your answer entirely in the form of a JSON object. The JSON object should have a key named "questions" which is an array of the questions. Each quiz question should include the choices, the answer, and a brief explanation of why the answer is correct. Don't include anything other than the JSON. The JSON properties of each question should be "query" (which is the question), "choices", "answer", and "explanation". The choices shouldn't have any ordinal value like A, B, C, D or a number like 1, 2, 3, 4. The answer should be the 0-indexed number of the correct choice.`

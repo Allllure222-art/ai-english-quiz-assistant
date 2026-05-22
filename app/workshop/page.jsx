@@ -128,6 +128,7 @@ export default function WorkshopPage() {
             questionNo: question._globalIndex + 1,
             questionType: question.questionType,
             sourceEvidence: question.sourceEvidence,
+            explanationZh: question.explanationZh || '',
         })
     }
 
