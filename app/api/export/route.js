@@ -36,11 +36,9 @@ export async function POST(request) {
             const model = buildDocumentModel(bundle, { variant: 'student' })
             const html = renderHtmlForStudent(model)
             // Return HTML; ExportToolbar opens it in a new window for browser-print-to-PDF.
-            const encoded = encodeURIComponent(bundle.meta.title || '学生版')
             return new Response(html, {
                 headers: {
                     'Content-Type': 'text/html; charset=utf-8',
-                    'Content-Disposition': `inline; filename="${encoded}-学生版.html"`,
                 },
             })
         }
@@ -49,13 +47,15 @@ export async function POST(request) {
         const model = buildDocumentModel(bundle, { variant: docVariant })
         const buf = await renderDocxBuffer(model)
         const suffix = variant === 'teacher' ? '教师版' : '学生版'
-        const titleEncoded = encodeURIComponent(bundle.meta.title || suffix)
+        const filenameRaw = `${bundle.meta.title || suffix}-${suffix}.docx`
+        // RFC 5987: filename*=UTF-8''<percent-encoded> allows non-ASCII in HTTP headers
+        const filenameEncoded = encodeURIComponent(filenameRaw)
 
         return new Response(buf, {
             headers: {
                 'Content-Type':
                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition': `attachment; filename="${titleEncoded}-${suffix}.docx"`,
+                'Content-Disposition': `attachment; filename*=UTF-8''${filenameEncoded}`,
             },
         })
     } catch (err) {
