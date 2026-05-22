@@ -94,9 +94,13 @@ const readingPrompt = `你是一名中考英语命题老师。请基于给定材
 
 const clozePrompt = `你是一名中考英语命题老师。请基于给定材料设计 exactly ${questionCount} 道完形填空单选题（初中学段）。
 
+【重要前提】
+- 如果材料第一行较短（少于 15 个词）且不是完整句子，视为标题行，禁止从标题行挖空。
+- 所有空必须来自正文段落，不得重复挖同一个词。
+
 【命题步骤】
-Step 1：从原文中按出现顺序选出 ${questionCount} 个适合命题的词（优先选动词、名词、形容词、介词等实词）。
-Step 2：将每个选中的词作为一个空，blankIndex 从 1 到 ${questionCount} 按原文顺序递增。
+Step 1：跳过标题行（若有），从正文第一个完整句子开始，按原文从前到后的出现顺序选出 ${questionCount} 个适合命题的词（优先选动词、名词、形容词、介词等实词）。
+Step 2：严格按词在原文中出现的先后顺序分配 blankIndex：第一个出现的词得 blankIndex=1，第二个得 blankIndex=2，依此类推到 ${questionCount}。
 Step 3：精确记录该词在原文中的位置，填写 sourcePosition。
 
 【字段要求】
@@ -234,10 +238,29 @@ ${hasPassage ? documentText : '无'}`
             )
 
             if (validated.ok) {
-                const questions = attachEvidencePositions(
+                let questions = attachEvidencePositions(
                     validated.data.questions,
                     parsedDocument
                 )
+
+                // For cloze: re-sort by text position and re-assign blankIndex
+                // so blanks always appear as 1, 2, 3… in document order,
+                // regardless of the order the AI chose to output them.
+                if (isCloze) {
+                    questions = [...questions].sort((a, b) => {
+                        const sa = a.sourcePosition
+                        const sb = b.sourcePosition
+                        // exact positions first; approximate blanks go to the end
+                        const aApprox = sa?.precision !== 'exact' ? 1 : 0
+                        const bApprox = sb?.precision !== 'exact' ? 1 : 0
+                        if (aApprox !== bApprox) return aApprox - bApprox
+                        if (sa?.page !== sb?.page) return (sa?.page ?? 1) - (sb?.page ?? 1)
+                        if (sa?.lineStart !== sb?.lineStart) return (sa?.lineStart ?? 0) - (sb?.lineStart ?? 0)
+                        return (sa?.charStart ?? 0) - (sb?.charStart ?? 0)
+                    })
+                    questions.forEach((q, i) => { q.blankIndex = i + 1 })
+                }
+
                 return Response.json({ questions })
             }
 
@@ -246,7 +269,16 @@ ${hasPassage ? documentText : '无'}`
                 (lastResult.finishReason === 'length' ||
                     validated.message?.includes('题目数量'))
             ) {
-                userPrompt = `${prompt}\n\n上一输出不完整或数量不对。请重新生成：必须恰好 ${questionCount} 道题，explanationZh 每题不超过 25 字，choices 每项尽量短。`
+                const actualCount = lastResult.rawQuiz?.questions?.length ?? 0
+                const missing = questionCount - actualCount
+                if (isCloze && missing > 0 && actualCount > 0) {
+                    userPrompt = `${prompt}\n\n【重要】上次只生成了 ${actualCount} 道题，还差 ${missing} 道。
+请继续从原文中再找 ${missing} 个不同的词挖空，补齐共 ${questionCount} 道。
+新题的 blankIndex 从 ${actualCount + 1} 开始递增，其他格式要求不变。
+只输出完整的 ${questionCount} 道题（含之前已有的），不要缩写。`
+                } else {
+                    userPrompt = `${prompt}\n\n上一输出不完整或数量不对。请重新生成：必须恰好 ${questionCount} 道题，explanationZh 每题不超过 25 字，choices 每项尽量短。`
+                }
                 continue
             }
 

@@ -268,8 +268,8 @@ export default function WorkshopPage() {
                     </p>
 
                     {/* Meta form (title / subtitle) */}
-                    <div className='bg-white border border-gray-200 rounded-lg p-4 shadow-sm'>
-                        <WorkshopMetaForm meta={bundle.meta} onChange={handleMetaChange} />
+                    <div className='bg-white border border-gray-200 rounded-lg px-4 pt-4 pb-2 shadow-sm'>
+                        <WorkshopMetaForm meta={bundle.meta} onChange={handleMetaChange} variant='light' />
                     </div>
 
                     {/* Exam paper view */}

@@ -152,7 +152,7 @@ function OptionsPanel({ question, total, onPrev, onNext, isTeacher, onQuestionCh
                         type='button'
                         onClick={onPrev}
                         disabled={question.blankIndex <= 1}
-                        className='rounded px-2 py-0.5 text-xs border border-gray-300 hover:bg-gray-100 disabled:opacity-30'
+                        className='rounded px-2 py-0.5 text-xs text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed'
                     >
                         ‹ 上题
                     </button>
@@ -160,7 +160,7 @@ function OptionsPanel({ question, total, onPrev, onNext, isTeacher, onQuestionCh
                         type='button'
                         onClick={onNext}
                         disabled={question.blankIndex >= total}
-                        className='rounded px-2 py-0.5 text-xs border border-gray-300 hover:bg-gray-100 disabled:opacity-30'
+                        className='rounded px-2 py-0.5 text-xs text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed'
                     >
                         下题 ›
                     </button>
