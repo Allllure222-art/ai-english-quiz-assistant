@@ -9,6 +9,7 @@ import DocumentViewer from '../components/DocumentViewer'
 import WorkshopMetaForm from '../components/workshop/WorkshopMetaForm'
 import QuestionEditor from '../components/workshop/QuestionEditor'
 import ExportToolbar from '../components/workshop/ExportToolbar'
+import ClozeExamView from '../components/workshop/ClozeExamView'
 
 import { useQuizGeneration } from '../hooks/useQuizGeneration'
 import { buildPhaseCopy } from '../../lib/quizGenerationClient'
@@ -28,6 +29,7 @@ export default function WorkshopPage() {
     const difficulty = params.get('difficulty') || 'beginner'
     const numQuestions = Number(params.get('numQuestions')) || 5
     const draftId = params.get('draftId')
+    const isCloze = quizType === 'cloze'
 
     const searchParamStr = params.toString()
 
@@ -35,10 +37,11 @@ export default function WorkshopPage() {
     const [generationKey, setGenerationKey] = useState(0)
     const [activeSourcePosition, setActiveSourcePosition] = useState(null)
     const [activeQuestionMeta, setActiveQuestionMeta] = useState(null)
+    const [showEditPanel, setShowEditPanel] = useState(false)
     const saveTimerRef = useRef(null)
 
     // ------------------------------------------------------------------
-    // Check for cached bundle (avoids re-generating on refresh)
+    // Load cached bundle
     // ------------------------------------------------------------------
     useEffect(() => {
         if (!draftId) return
@@ -47,7 +50,7 @@ export default function WorkshopPage() {
     }, [draftId])
 
     // ------------------------------------------------------------------
-    // Quiz generation (only runs if no cached bundle)
+    // Quiz generation
     // ------------------------------------------------------------------
     const handleSuccess = useCallback(
         ({ questions, parsedDocument, articleMeta }) => {
@@ -103,6 +106,16 @@ export default function WorkshopPage() {
         })
     }
 
+    // For ClozeExamView: question change by blankIndex
+    const handleClozeQuestionChange = useCallback((updatedQ) => {
+        setBundle((prev) => {
+            const questions = (prev.questions || []).map(q =>
+                q.blankIndex === updatedQ.blankIndex ? updatedQ : q
+            )
+            return { ...prev, questions }
+        })
+    }, [])
+
     const handleIncludeEvidenceChange = (checked) => {
         setBundle((prev) => ({
             ...prev,
@@ -113,9 +126,7 @@ export default function WorkshopPage() {
     const handleRegenerate = () => {
         setBundle(null)
         if (draftId) {
-            try {
-                window.sessionStorage.removeItem(`workshop:${draftId}`)
-            } catch {}
+            try { window.sessionStorage.removeItem(`workshop:${draftId}`) } catch {}
         }
         setActiveSourcePosition(null)
         setActiveQuestionMeta(null)
@@ -133,26 +144,19 @@ export default function WorkshopPage() {
     }
 
     // ------------------------------------------------------------------
-    // Guard: no draftId
+    // Guards
     // ------------------------------------------------------------------
     if (!draftId) {
         return (
             <div className='mx-auto max-w-lg px-4 pt-20 text-center text-white/80'>
                 <p>链接参数不完整，请从首页重新进入。</p>
-                <button
-                    type='button'
-                    className='q-button !mt-6'
-                    onClick={() => router.push('/')}
-                >
+                <button type='button' className='q-button !mt-6' onClick={() => router.push('/')}>
                     返回首页
                 </button>
             </div>
         )
     }
 
-    // ------------------------------------------------------------------
-    // Loading state
-    // ------------------------------------------------------------------
     if (isLoading && !bundle) {
         const phase = buildPhaseCopy(elapsedSeconds)
         return (
@@ -165,9 +169,6 @@ export default function WorkshopPage() {
         )
     }
 
-    // ------------------------------------------------------------------
-    // Error state
-    // ------------------------------------------------------------------
     if (errorDetail && !bundle) {
         return (
             <div className='mx-auto max-w-lg px-4 pt-16'>
@@ -175,9 +176,7 @@ export default function WorkshopPage() {
                     <p className='font-semibold text-red-200'>{errorDetail.headline}</p>
                     <p className='mt-1 text-sm text-red-300/80'>{errorDetail.body}</p>
                     {errorDetail.code && (
-                        <p className='mt-2 text-xs text-white/40'>
-                            错误代码：{errorDetail.code}
-                        </p>
+                        <p className='mt-2 text-xs text-white/40'>错误代码：{errorDetail.code}</p>
                     )}
                     <div className='mt-4 flex flex-wrap gap-2'>
                         <button
@@ -201,9 +200,6 @@ export default function WorkshopPage() {
         )
     }
 
-    // ------------------------------------------------------------------
-    // Empty bundle (shouldn't usually happen)
-    // ------------------------------------------------------------------
     if (!bundle) {
         const phase = buildPhaseCopy(elapsedSeconds)
         return (
@@ -217,7 +213,106 @@ export default function WorkshopPage() {
     }
 
     // ------------------------------------------------------------------
-    // Main workshop UI
+    // ── CLOZE: Exam paper layout ────────────────────────────────────────
+    // ------------------------------------------------------------------
+    if (isCloze) {
+        return (
+            // Light gray background — simulates "print preview" environment
+            <div className='min-h-screen bg-gray-100 pb-12'>
+                {/* Top bar */}
+                <div className='bg-white border-b border-gray-200 shadow-sm px-4 py-2 flex flex-wrap items-center gap-2 justify-between'>
+                    <div className='flex items-center gap-2'>
+                        <span className='text-sm font-semibold text-gray-700'>备课工作台</span>
+                        <span className='text-gray-300'>|</span>
+                        <span className='text-xs text-gray-500'>完形填空 · 预览及编辑</span>
+                    </div>
+                    <div className='flex flex-wrap gap-2'>
+                        <Link
+                            href={`/quiz?${searchParamStr}`}
+                            className='rounded border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-50'
+                        >
+                            在线练习
+                        </Link>
+                        <button
+                            type='button'
+                            onClick={handleRegenerate}
+                            disabled={isLoading}
+                            className='rounded border border-amber-400 px-3 py-1 text-xs text-amber-700 hover:bg-amber-50 disabled:opacity-50'
+                        >
+                            重新生成
+                        </button>
+                        <button
+                            type='button'
+                            onClick={() => setShowEditPanel(v => !v)}
+                            className={`rounded border px-3 py-1 text-xs transition-colors ${
+                                showEditPanel
+                                    ? 'border-blue-400 bg-blue-50 text-blue-700'
+                                    : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                            }`}
+                        >
+                            {showEditPanel ? '▲ 收起编辑' : '✎ 编辑题目'}
+                        </button>
+                        <Link
+                            href='/'
+                            className='rounded border border-gray-200 px-3 py-1 text-xs text-gray-400 hover:bg-gray-50'
+                        >
+                            返回首页
+                        </Link>
+                    </div>
+                </div>
+
+                <div className='mx-auto max-w-[1200px] px-4 pt-4 space-y-4'>
+                    {/* Auto-save tip */}
+                    <p className='text-xs text-gray-400'>
+                        编辑内容自动保存到本机，刷新不丢失。点击原文中序号可切换选项。
+                    </p>
+
+                    {/* Meta form (title / subtitle) */}
+                    <div className='bg-white border border-gray-200 rounded-lg p-4 shadow-sm'>
+                        <WorkshopMetaForm meta={bundle.meta} onChange={handleMetaChange} />
+                    </div>
+
+                    {/* Exam paper view */}
+                    <ClozeExamView
+                        bundle={bundle}
+                        isTeacher={true}
+                        onQuestionChange={handleClozeQuestionChange}
+                    />
+
+                    {/* Export toolbar */}
+                    <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-4'>
+                        <ExportToolbar
+                            bundle={bundle}
+                            disabled={!bundle?.questions?.length}
+                            onIncludeEvidenceChange={handleIncludeEvidenceChange}
+                        />
+                    </div>
+
+                    {/* Collapsible question editor */}
+                    {showEditPanel && (
+                        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-4'>
+                            <h3 className='text-sm font-semibold text-gray-700 mb-3'>
+                                题目详细编辑（共 {bundle.questions?.length} 空）
+                            </h3>
+                            {(bundle.questions || []).map((q, i) => (
+                                <QuestionEditor
+                                    key={i}
+                                    question={{ ...q, _globalIndex: i }}
+                                    index={i}
+                                    quizType={quizType}
+                                    onChange={(newQ) => handleQuestionChange(i, newQ)}
+                                    onLocateEvidence={handleLocateEvidence}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
+    // ------------------------------------------------------------------
+    // ── READING: Original two-column layout ─────────────────────────────
     // ------------------------------------------------------------------
     const clozeQuestions = (bundle.questions || [])
         .map((q, i) => ({ ...q, _globalIndex: i }))
@@ -307,13 +402,7 @@ export default function WorkshopPage() {
 
                 {/* Right: Editor */}
                 <div>
-                    {/* Meta form */}
-                    <WorkshopMetaForm
-                        meta={bundle.meta}
-                        onChange={handleMetaChange}
-                    />
-
-                    {/* Questions */}
+                    <WorkshopMetaForm meta={bundle.meta} onChange={handleMetaChange} />
                     <h3 className='mb-2 text-sm font-semibold text-white/70'>
                         题目（共 {bundle.questions?.length || 0} 题）
                     </h3>
@@ -327,8 +416,6 @@ export default function WorkshopPage() {
                             onLocateEvidence={handleLocateEvidence}
                         />
                     ))}
-
-                    {/* Export toolbar */}
                     <div className='mt-4'>
                         <ExportToolbar
                             bundle={bundle}
